@@ -19,10 +19,8 @@ class AskForm(forms.Form):
         #         code='spam'
         #     )
 
-    def save(self):
-        user = User(username='x_'+str(int(time.time())),
-                    password='y_'+str(int(time.time())))
-        user.save()
+    def save(self, user_id):
+        user = User.objects.get(id=user_id)
         self.cleaned_data['author'] = user
         question = Question(**self.cleaned_data)
         question.save()
@@ -47,10 +45,8 @@ class AnswerForm(forms.Form):
     #             u'Сообщение не корректно', code=12)
     #     return message + "\nThank you for your attention."
 
-    def save(self):
-        user = User(username='x_'+str(int(time.time())),
-                    password='y_'+str(int(time.time())))
-        user.save()
+    def save(self, user_id):
+        user = User.objects.get(id=user_id)
         self.cleaned_data['author'] = user
         question = Question.objects.get(id=self.cleaned_data['question'])
         self.cleaned_data['question'] = question
@@ -65,3 +61,23 @@ class AnswerForm(forms.Form):
     #     #         u'Сообщение похоже на спам',
     #     #         code='spam'
     #     #     )
+
+
+class SignupForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField()
+    email = forms.EmailField()
+
+    def save(self):
+        user = User(**self.cleaned_data)
+        user.save()
+        return user
+
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField()
+
+    # def save(self):
+    #     user = User(**self.cleaned_data)
+    #     user.save()
+    #     return user

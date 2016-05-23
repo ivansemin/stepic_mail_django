@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import time
+
 from django.http import HttpResponse
+from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
-from django.shortcuts import render, Http404, HttpResponseRedirect
+from django.shortcuts import render, Http404, HttpResponseRedirect, redirect
+
 
 from models import Question, Answer
-from forms import AskForm, AnswerForm
+from forms import AskForm, AnswerForm, SignupForm, LoginForm
 
 
 def test(request, *args, **kwargs):
@@ -54,7 +58,8 @@ def ask(request):
     if request.method == "POST":
         form = AskForm(request.POST)
         if form.is_valid():
-            question = form.save()
+            user_id = request.COOKIES['sessionid']
+            question = form.save(user_id)
             url = question.get_url()
             return HttpResponseRedirect(url)
     else:
@@ -69,7 +74,8 @@ def answer(request):
 
         print form.data
         if form.is_valid():
-            answer = form.save()
+            user_id = request.COOKIES['sessionid']
+            answer = form.save(user_id)
             url = answer.get_url()
             print url
             return HttpResponseRedirect(url)
@@ -78,3 +84,36 @@ def answer(request):
             # return HttpResponseRedirect(reverse('question'), [question_id])
     else:
         raise Http404
+
+
+def signup(request):
+    if request.method == "POST":
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            response = redirect(reverse('home'))
+            response.set_cookie('sessionid', user.id)
+            return response
+    else:
+        form = SignupForm()
+    return render(request, 'signup.html', {
+        'form': form
+    })
+
+
+def login(request):
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            try:
+                user = User.objects.get(username=form.cleaned_data['username'])
+                response = redirect(reverse('home'))
+                response.set_cookie('sessionid', user.id)
+                return response
+            except ObjectDoesNotExist:
+                pass
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {
+        'form': form
+    })
